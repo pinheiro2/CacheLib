@@ -1,11 +1,6 @@
 name: eBPF - Build (from original Deploy Website)
 
 on:
-  push:
-    branches:
-      - main
-    paths:
-      - 'website/**'
   workflow_dispatch:
 
 permissions:
