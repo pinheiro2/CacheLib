@@ -21,11 +21,11 @@ jobs:
       - name: Setup Metrics & Start Monitor
         run: |
           sudo apt-get update && sudo apt-get install -y sysstat
-          mkdir -p ./metrics
+          mkdir -p /tmp/metrics
           # Standardized internal filenames
-          pidstat -u -r -d -l 1 > ./metrics/pidstat.log &
-          echo $! > ./metrics/monitor.pid
-          echo "START_TIME=$(date +%s.%N)" > ./metrics/timing.env
+          pidstat -u -r -d -l 1 > /tmp/metrics/pidstat.log &
+          echo $! > /tmp/metrics/monitor.pid
+          echo "START_TIME=$(date +%s.%N)" > /tmp/metrics/timing.env
           echo "Started monitoring and timing..."
 
       - uses: actions/checkout@v6
@@ -58,12 +58,12 @@ jobs:
         if: always() 
         run: |
           END_TIME=$(date +%s.%N)
-          source ./metrics/timing.env
+          source /tmp/metrics/timing.env
           DURATION=$(awk "BEGIN {print $END_TIME - $START_TIME}")
-          echo "END_TIME=$END_TIME" >> ./metrics/timing.env
-          echo "DURATION=$DURATION" >> ./metrics/timing.env
+          echo "END_TIME=$END_TIME" >> /tmp/metrics/timing.env
+          echo "DURATION=$DURATION" >> /tmp/metrics/timing.env
           
-          kill $(cat ./metrics/monitor.pid) || true
+          kill $(cat /tmp/metrics/monitor.pid) || true
           echo "Stopped monitoring. Total time: $DURATION seconds."
       
       - name: Export Original Analyze Metrics
@@ -71,7 +71,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: metrics-build-${{ github.run_id }}
-          path: ./metrics/
+          path: /tmp/metrics/
   
   ebpf_build:
     runs-on: ubuntu-latest
@@ -80,11 +80,11 @@ jobs:
       - name: Setup Metrics & Start Monitor
         run: |
           sudo apt-get update && sudo apt-get install -y sysstat
-          mkdir -p ./metrics
+          mkdir -p /tmp/metrics
           # Standardized internal filenames
-          pidstat -u -r -d -l 1 > ./metrics/pidstat.log &
-          echo $! > ./metrics/monitor.pid
-          echo "START_TIME=$(date +%s.%N)" > ./metrics/timing.env
+          pidstat -u -r -d -l 1 > /tmp/metrics/pidstat.log &
+          echo $! > /tmp/metrics/monitor.pid
+          echo "START_TIME=$(date +%s.%N)" > /tmp/metrics/timing.env
           echo "Started monitoring and timing..."
 
       - name: Start Falco
@@ -132,12 +132,12 @@ jobs:
         if: always() 
         run: |
           END_TIME=$(date +%s.%N)
-          source ./metrics/timing.env
+          source /tmp/metrics/timing.env
           DURATION=$(awk "BEGIN {print $END_TIME - $START_TIME}")
-          echo "END_TIME=$END_TIME" >> ./metrics/timing.env
-          echo "DURATION=$DURATION" >> ./metrics/timing.env
+          echo "END_TIME=$END_TIME" >> /tmp/metrics/timing.env
+          echo "DURATION=$DURATION" >> /tmp/metrics/timing.env
           
-          kill $(cat ./metrics/monitor.pid) || true
+          kill $(cat /tmp/metrics/monitor.pid) || true
           echo "Stopped monitoring. Total time: $DURATION seconds."
       
       - name: Export Original Analyze Metrics
@@ -145,7 +145,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: metrics-ebpf_build-${{ github.run_id }}
-          path: ./metrics/
+          path: /tmp/metrics/
       
   analyze:
     runs-on: ubuntu-latest
@@ -157,11 +157,11 @@ jobs:
       - name: Setup Metrics & Start Monitor
         run: |
           sudo apt-get update && sudo apt-get install -y sysstat
-          mkdir -p ./metrics
+          mkdir -p /tmp/metrics
           # Standardized internal filenames
-          pidstat -u -r -d -l 1 > ./metrics/pidstat.log &
-          echo $! > ./metrics/monitor.pid
-          echo "START_TIME=$(date +%s.%N)" > ./metrics/timing.env
+          pidstat -u -r -d -l 1 > /tmp/metrics/pidstat.log &
+          echo $! > /tmp/metrics/monitor.pid
+          echo "START_TIME=$(date +%s.%N)" > /tmp/metrics/timing.env
           echo "Started monitoring and timing..."
 
       - name: Checkout Code
@@ -303,12 +303,12 @@ jobs:
         if: always() 
         run: |
           END_TIME=$(date +%s.%N)
-          source ./metrics/timing.env
+          source /tmp/metrics/timing.env
           DURATION=$(awk "BEGIN {print $END_TIME - $START_TIME}")
-          echo "END_TIME=$END_TIME" >> ./metrics/timing.env
-          echo "DURATION=$DURATION" >> ./metrics/timing.env
+          echo "END_TIME=$END_TIME" >> /tmp/metrics/timing.env
+          echo "DURATION=$DURATION" >> /tmp/metrics/timing.env
           
-          kill $(cat ./metrics/monitor.pid) || true
+          kill $(cat /tmp/metrics/monitor.pid) || true
           echo "Stopped monitoring. Total time: $DURATION seconds."
 
       - name: Export Analyze Metrics
@@ -316,7 +316,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: metrics-analyze-${{ github.run_id }}
-          path: ./metrics/
+          path: /tmp/metrics/
 
   original_analyze:
       runs-on: ubuntu-latest
@@ -328,11 +328,11 @@ jobs:
         - name: Setup Metrics & Start Monitor
           run: |
             sudo apt-get update && sudo apt-get install -y sysstat
-            mkdir -p ./metrics
+            mkdir -p /tmp/metrics
             # Standardized internal filenames
-            pidstat -u -r -d -l 1 > ./metrics/pidstat.log &
-            echo $! > ./metrics/monitor.pid
-            echo "START_TIME=$(date +%s.%N)" > ./metrics/timing.env
+            pidstat -u -r -d -l 1 > /tmp/metrics/pidstat.log &
+            echo $! > /tmp/metrics/monitor.pid
+            echo "START_TIME=$(date +%s.%N)" > /tmp/metrics/timing.env
             echo "Started monitoring and timing..."
 
         - name: Analyze
@@ -348,12 +348,12 @@ jobs:
           if: always() 
           run: |
             END_TIME=$(date +%s.%N)
-            source ./metrics/timing.env
+            source /tmp/metrics/timing.env
             DURATION=$(awk "BEGIN {print $END_TIME - $START_TIME}")
-            echo "END_TIME=$END_TIME" >> ./metrics/timing.env
-            echo "DURATION=$DURATION" >> ./metrics/timing.env
+            echo "END_TIME=$END_TIME" >> /tmp/metrics/timing.env
+            echo "DURATION=$DURATION" >> /tmp/metrics/timing.env
             
-            kill $(cat ./metrics/monitor.pid) || true
+            kill $(cat /tmp/metrics/monitor.pid) || true
             echo "Stopped monitoring. Total time: $DURATION seconds."
           
         - name: Export Original Analyze Metrics
@@ -361,6 +361,6 @@ jobs:
           uses: actions/upload-artifact@v4
           with:
             name: metrics-original_analyze-${{ github.run_id }}
-            path: ./metrics/
+            path: /tmp/metrics/
 
 
