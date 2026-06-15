@@ -18,6 +18,16 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
+      - name: Setup Metrics & Start Monitor
+        run: |
+          sudo apt-get update && sudo apt-get install -y sysstat
+          mkdir -p ./metrics
+          # Standardized internal filenames
+          pidstat -u -r -d -l 1 > ./metrics/pidstat.log &
+          echo $! > ./metrics/monitor.pid
+          echo "START_TIME=$(date +%s.%N)" > ./metrics/timing.env
+          echo "Started monitoring and timing..."
+
       - uses: actions/checkout@v6
 
       - name: Setup Node.js
@@ -42,10 +52,41 @@ jobs:
         uses: actions/upload-pages-artifact@v5
         with:
           path: website/build
+      
+      - name: Stop Monitor & Record Time
+        # always() ensures the monitor stops and uploads even if the script fails
+        if: always() 
+        run: |
+          END_TIME=$(date +%s.%N)
+          source ./metrics/timing.env
+          DURATION=$(awk "BEGIN {print $END_TIME - $START_TIME}")
+          echo "END_TIME=$END_TIME" >> ./metrics/timing.env
+          echo "DURATION=$DURATION" >> ./metrics/timing.env
+          
+          kill $(cat ./metrics/monitor.pid) || true
+          echo "Stopped monitoring. Total time: $DURATION seconds."
+      
+      - name: Export Original Analyze Metrics
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: metrics-build-${{ github.run_id }}
+          path: ./metrics/
   
   ebpf_build:
     runs-on: ubuntu-latest
     steps:
+
+      - name: Setup Metrics & Start Monitor
+        run: |
+          sudo apt-get update && sudo apt-get install -y sysstat
+          mkdir -p ./metrics
+          # Standardized internal filenames
+          pidstat -u -r -d -l 1 > ./metrics/pidstat.log &
+          echo $! > ./metrics/monitor.pid
+          echo "START_TIME=$(date +%s.%N)" > ./metrics/timing.env
+          echo "Started monitoring and timing..."
+
       - name: Start Falco
         uses: falcosecurity/falco-actions/start@54d299d4c40de1ad6bf680fefbbfed1bc5b8f057
         with:
@@ -86,6 +127,26 @@ jobs:
         with:
           mode: analyze
       
+      - name: Stop Monitor & Record Time
+        # always() ensures the monitor stops and uploads even if the script fails
+        if: always() 
+        run: |
+          END_TIME=$(date +%s.%N)
+          source ./metrics/timing.env
+          DURATION=$(awk "BEGIN {print $END_TIME - $START_TIME}")
+          echo "END_TIME=$END_TIME" >> ./metrics/timing.env
+          echo "DURATION=$DURATION" >> ./metrics/timing.env
+          
+          kill $(cat ./metrics/monitor.pid) || true
+          echo "Stopped monitoring. Total time: $DURATION seconds."
+      
+      - name: Export Original Analyze Metrics
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: metrics-ebpf_build-${{ github.run_id }}
+          path: ./metrics/
+      
   analyze:
     runs-on: ubuntu-latest
     needs: ebpf_build
@@ -93,6 +154,16 @@ jobs:
       contents: read
       actions: read
     steps:
+      - name: Setup Metrics & Start Monitor
+        run: |
+          sudo apt-get update && sudo apt-get install -y sysstat
+          mkdir -p ./metrics
+          # Standardized internal filenames
+          pidstat -u -r -d -l 1 > ./metrics/pidstat.log &
+          echo $! > ./metrics/monitor.pid
+          echo "START_TIME=$(date +%s.%N)" > ./metrics/timing.env
+          echo "Started monitoring and timing..."
+
       - name: Checkout Code
         uses: actions/checkout@v6
 
@@ -226,6 +297,26 @@ jobs:
         with:
           name: security-baseline
           path: ./falco-data/baseline.json
+      
+      - name: Stop Monitor & Record Time
+        # always() ensures the monitor stops and uploads even if the script fails
+        if: always() 
+        run: |
+          END_TIME=$(date +%s.%N)
+          source ./metrics/timing.env
+          DURATION=$(awk "BEGIN {print $END_TIME - $START_TIME}")
+          echo "END_TIME=$END_TIME" >> ./metrics/timing.env
+          echo "DURATION=$DURATION" >> ./metrics/timing.env
+          
+          kill $(cat ./metrics/monitor.pid) || true
+          echo "Stopped monitoring. Total time: $DURATION seconds."
+
+      - name: Export Analyze Metrics
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: metrics-analyze-${{ github.run_id }}
+          path: ./metrics/
 
   original_analyze:
       runs-on: ubuntu-latest
@@ -234,6 +325,16 @@ jobs:
         contents: read
         actions: read
       steps:
+        - name: Setup Metrics & Start Monitor
+          run: |
+            sudo apt-get update && sudo apt-get install -y sysstat
+            mkdir -p ./metrics
+            # Standardized internal filenames
+            pidstat -u -r -d -l 1 > ./metrics/pidstat.log &
+            echo $! > ./metrics/monitor.pid
+            echo "START_TIME=$(date +%s.%N)" > ./metrics/timing.env
+            echo "Started monitoring and timing..."
+
         - name: Analyze
           uses: falcosecurity/falco-actions/analyze@54d299d4c40de1ad6bf680fefbbfed1bc5b8f057
           with:
@@ -241,5 +342,25 @@ jobs:
             extract-written-files: true
             extract-chisels: true
             extract-hashes: true   
+        
+        - name: Stop Monitor & Record Time
+          # always() ensures the monitor stops and uploads even if the script fails
+          if: always() 
+          run: |
+            END_TIME=$(date +%s.%N)
+            source ./metrics/timing.env
+            DURATION=$(awk "BEGIN {print $END_TIME - $START_TIME}")
+            echo "END_TIME=$END_TIME" >> ./metrics/timing.env
+            echo "DURATION=$DURATION" >> ./metrics/timing.env
+            
+            kill $(cat ./metrics/monitor.pid) || true
+            echo "Stopped monitoring. Total time: $DURATION seconds."
+          
+        - name: Export Original Analyze Metrics
+          if: always()
+          uses: actions/upload-artifact@v4
+          with:
+            name: metrics-original_analyze-${{ github.run_id }}
+            path: ./metrics/
 
 
