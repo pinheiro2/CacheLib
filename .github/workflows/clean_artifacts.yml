@@ -1,0 +1,15 @@
+name: Limpeza de Artifacts
+on:
+  workflow_dispatch:
+
+jobs:
+  clean-artifacts:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Eliminar artifacts antigos
+        uses: geekyeggo/delete-artifact@v5
+        with:
+          name: |
+            *
+          useGlob: true
+          failOnError: false
