@@ -1,0 +1,10 @@
+name: 'Lifecycle Timer'
+description: 'Times workflow execution through all post steps and uploads metrics'
+inputs:
+  job_name:
+    description: 'Name of the job for artifact naming'
+    required: true
+runs:
+  using: 'node20'
+  main: 'index.js'
+  post: 'post.js'
